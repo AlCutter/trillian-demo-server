@@ -85,8 +85,6 @@ class TrillianAdminClient():
 
 
 class TrillianLogClient():
-    MAX_LEAVES_PER_REQUEST = 1024
-
     def __init__(self, host, port, log_id):
         self.__channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self.__stub = trillian_log_api_pb2_grpc.TrillianLogStub(self.__channel)
@@ -154,8 +152,6 @@ class TrillianLogClient():
                     start, tree_size
                 )
             )
-
-        end = min(start + self.MAX_LEAVES_PER_REQUEST, end)
 
         indexes = list(
             range(start, min(end, tree_size))
