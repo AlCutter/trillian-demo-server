@@ -113,25 +113,12 @@ class TrillianLogClient():
 
     def get_recent_leaves(self, number_of_leaves):
         tree_size = self.get_tree_size()
-
-        indexes = list(range(
-            tree_size - 1,
-            max(0, tree_size - 1 - number_of_leaves),
-            -1
-        ))
-
-        if not indexes:
+        if tree_size == 0 or number_of_leaves == 0:
             return []
 
-        print("Requesting indexes {}".format(indexes))
-
-        request = trillian_log_api_pb2.GetLeavesByIndexRequest(
-            log_id=self.__log_id,
-        )
-        request.leaf_index.extend(indexes)
-
-        response = self.__stub.GetLeavesByIndex(request)
-        return response.leaves
+        bottom = max(0, tree_size - number_of_leaves)
+        count = min(tree_size, number_of_leaves)
+        return self.get_leaves_by_range(bottom, count)
 
     def get_leaves(self, start, end):
         if not isinstance(start, int) or not isinstance(end, int):
@@ -144,38 +131,34 @@ class TrillianLogClient():
         if start > end:
             raise ValueError('`end` must be >= `start`')
 
-        tree_size = self.get_tree_size()
+        return self.get_leaves_by_range(start, end-start+1)
 
+    def get_leaves_by_range(self, start, count):
+        tree_size = self.get_tree_size()
         if not start < tree_size:
             raise ValueError(
                 'start ({}) must be < tree_size ({})'.format(
                     start, tree_size
                 )
             )
+        if count < 0:
+            raise ValueError('`count` must be non-negative')
 
-        indexes = list(
-            range(start, min(end, tree_size))
-        )
+        print("Requesting indexes {} to {}".format(start, start+count))
 
-        if not indexes:
-            return []
-
-        print("Requesting indexes {}".format(indexes))
-
-        request = trillian_log_api_pb2.GetLeavesByIndexRequest(
+        request = trillian_log_api_pb2.GetLeavesByRangeRequest(
             log_id=self.__log_id,
+            start_index=start,
+            count=count,
         )
-        request.leaf_index.extend(indexes)
 
-        response = self.__stub.GetLeavesByIndex(request)
+        response = self.__stub.GetLeavesByRange(request)
 
         return sorted(
             response.leaves,
             key=lambda l: l.leaf_index
         )
 
-    def get_leaves_by_range(self, start_index, count):
-        return self.get_leaves(start_index, start_index + count)
 
     def get_consistency_proof(self, first_tree_size, second_tree_size):
         if first_tree_size <= 0:
