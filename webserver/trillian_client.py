@@ -140,10 +140,11 @@ class TrillianLogClient():
             raise ValueError('`start` and `end` must be integers')
 
         if start < 0 or end < 0:
-            raise ValueError('`start` and `end` must be greater than zero')
+            raise ValueError(
+                    '`start` and `end` must be greater than or equal to zero')
 
-        if start >= end:
-            raise ValueError('`end` must be greater than `start`')
+        if start > end:
+            raise ValueError('`end` must be >= `start`')
 
         tree_size = self.get_tree_size()
 
@@ -184,7 +185,7 @@ class TrillianLogClient():
         if first_tree_size <= 0:
             raise ValueError('`first_tree_size` must be > 0')
 
-        if first_tree_size > second_tree_size:
+        if first_tree_size >= second_tree_size:
             raise ValueError('`first_tree_size` must be < `second_tree_size`')
 
         request = trillian_log_api_pb2.GetConsistencyProofRequest(
